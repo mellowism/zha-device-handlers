@@ -1,0 +1,144 @@
+from zigpy.quirks import CustomDevice
+from zigpy.types import enum8, int16s
+from zhaquirks.tuya.builder import TuyaQuirkBuilder
+from zigpy.quirks.v2.homeassistant import UnitOfTemperature, UnitOfEnergy, UnitOfPower
+from zigpy.quirks.v2.homeassistant.sensor import SensorDeviceClass, SensorStateClass
+
+
+# Define system and preset modes
+class SystemMode(enum8):
+    Off = 0x00
+    Heat = 0x01
+
+
+class PresetMode(enum8):
+    Manual = 0x00
+    Home = 0x01
+    Away = 0x02
+
+
+class SensorMode(enum8):
+    Air = 0x00
+    Floor = 0x01
+    Both = 0x02
+
+
+class RunningState(enum8):
+    Idle = 0x00
+    Heat = 0x01
+
+
+quirk = (
+    TuyaQuirkBuilder()
+    .applies_to("_TZE204_p3lqqy2r", "TS0601")
+    
+    # Add climate attributes
+    .tuya_enum(
+        dp_id=0x01,
+        attribute_name="system_mode",
+        enum_class=SystemMode,
+        translation_key="system_mode",
+        fallback_name="System Mode",
+    )
+    .tuya_enum(
+        dp_id=0x02,
+        attribute_name="preset_mode",
+        enum_class=PresetMode,
+        translation_key="preset_mode",
+        fallback_name="Preset Mode",
+    )
+    .tuya_number(
+        dp_id=0x10,
+        type=int16s,
+        attribute_name="current_heating_setpoint",
+        min_value=5,
+        max_value=35,
+        step=1,
+        unit=UnitOfTemperature.CELSIUS,
+        translation_key="heating_setpoint",
+        fallback_name="Heating Setpoint",
+    )
+    .tuya_sensor(
+        dp_id=0x18,
+        attribute_name="local_temperature",
+        type=int16s,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        unit=UnitOfTemperature.CELSIUS,
+        translation_key="local_temperature",
+        fallback_name="Air Temperature",
+    )
+    .tuya_sensor(
+        dp_id=0x65,
+        attribute_name="local_temperature_floor",
+        type=int16s,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        unit=UnitOfTemperature.CELSIUS,
+        translation_key="local_temperature_floor",
+        fallback_name="Floor Temperature",
+    )
+    .tuya_number(
+        dp_id=0x6B,
+        type=int16s,
+        attribute_name="max_temperature_protection",
+        min_value=20,
+        max_value=95,
+        step=1,
+        unit=UnitOfTemperature.CELSIUS,
+        translation_key="max_temperature_protection",
+        fallback_name="Max Temperature",
+    )
+    .tuya_enum(
+        dp_id=0x66,
+        attribute_name="temperature_sensor_select",
+        enum_class=SensorMode,
+        translation_key="sensor_mode",
+        fallback_name="Sensor Mode",
+    )
+    .tuya_number(
+        dp_id=0x6D,
+        type=int16s,
+        attribute_name="local_temperature_calibration",
+        min_value=-9,
+        max_value=9,
+        step=1,
+        unit=UnitOfTemperature.CELSIUS,
+        translation_key="temperature_calibration",
+        fallback_name="Temperature Calibration",
+    )
+    .tuya_enum(
+        dp_id=0x68,
+        attribute_name="running_state",
+        enum_class=RunningState,
+        translation_key="running_state",
+        fallback_name="Heating Status",
+    )
+    .tuya_sensor(
+        dp_id=123,
+        attribute_name="energy",
+        type=int16s,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        unit=UnitOfEnergy.KILO_WATT_HOUR,
+        translation_key="energy",
+        fallback_name="Energy",
+    )
+    .tuya_sensor(
+        dp_id=122,
+        attribute_name="power",
+        type=int16s,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        unit=UnitOfPower.WATT,
+        translation_key="power",
+        fallback_name="Power",
+    )
+    .tuya_binary_sensor(
+        dp_id=0x6A,
+        attribute_name="window_detection",
+        translation_key="window_detection",
+        fallback_name="Open Window Detection",
+    )
+    .add_to_registry()
+)
